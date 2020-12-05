@@ -1,0 +1,49 @@
+version: "3.7"
+
+services:
+  db:
+    restart: always
+    image: "postgres:12"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=posttest
+    volumes:
+      - pg_data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+    networks:
+      - postgres
+
+  pgadmin:
+    restart: always
+    image: dpage/pgadmin4
+    depends_on: 
+      - db
+    environment: 
+      - PGADMIN_DEFAULT_EMAIL=test@example.com
+      - PGADMIN_DEFAULT_PASSWORD=posttest
+    volumes: 
+      - pgadmin_data:/var/lib/pgadmin
+      - "./servers.json:/pgadmin4/servers.json"
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    networks:
+      - postgres
+  app:
+    build: .
+    command: python /code/sample.py
+    volumes:
+      - .:/code
+    networks: 
+      - postgres
+    depends_on: 
+      - pgadmin
+    # stdin_open: true ## docker run -i
+    # tty: true        ## docker run -t
+
+networks: 
+  postgres:
+    driver: bridge
+volumes:
+  pg_data:
+  pgadmin_data:
